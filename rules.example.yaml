@@ -1,0 +1,692 @@
+# 分类规则库（模板）。复制成 rules.yaml 再改，rules.yaml 已被 .gitignore 忽略。
+# 改词不用改代码，改完跑 `python run.py classify --replay` 秒级重算。
+#
+# 打分：Σ 权重(strong 2.5 / normal 1.0) × 字段权重(标题 1.8 / 摘要 0.6 / 正文 0.8)
+#       + 1.0（仅当标题命中 >= title_bonus_min_strong 个 strong）
+# 分档：>= gray_high 高置信；gray_low~gray_high 置信中（进待核实）；< gray_low 不入候选
+
+version: 1
+
+defaults:
+  title_weight: 1.8
+  digest_weight: 0.6
+  body_weight: 0.8
+  strong_weight: 2.5
+  normal_weight: 1.0
+  title_bonus: 1.0
+  title_bonus_min_strong: 2
+  gray_low: 2.5
+  gray_high: 5.0
+  # 排除类：分数达到该值才归入该类，否则记为"未达阈值"
+  exclude_min_score: 1.0
+
+# 栏目映射。很多公众号的标题写成「正文标题 | 栏目」，栏目是编辑自己打的标签，
+# 比关键词可靠得多，所以命中栏目直接给一个超过高置信阈值的底座分。
+# 值为 null 表示该栏目内容太杂，只记录不定性（简讯类栏目里既有活动也有普通讲座）。
+channel_weight: 6.0
+channels:
+  荣誉播报: honor
+  业绩捷报: case_achievement
+  党建工作: party_building
+  专业视点: exclude_pro
+  讲座预告: exclude_notice
+  新闻简讯: null
+  年度案例: exclude_annual_case
+
+# 年度总结类文章是大事记最好的交叉校验源，命中即置顶，绝不排除
+annual_review_words:
+  - 十件大事
+  - 年度大事
+  - 年度回顾
+  - 盘点
+  - 年度总结
+  - 成绩单
+  - 年度亮点
+  - 巡礼
+  - 答卷
+  # 多数单位每年 5–6 月集中发布的评选系列，等于官方认可的年度业绩清单
+  - 年度案例
+  - 十佳案例
+  - 优秀案例
+  - 优秀案例
+  - 评选结果公示
+  - 年度优秀案例
+
+categories:
+  - id: honor
+    name: 荣誉表彰
+    type: event
+    priority: 100
+    veto_on_negative: true
+    strong:
+      - 荣获
+      - 荣膺
+      - 获评
+      - 被评为
+      - 授予
+      - 表彰
+      - 嘉奖
+      - 荣登
+      - 获选
+      - 入选
+      - 获聘
+      - 聘为
+      - 获奖
+      - 一等奖
+      - 二等奖
+      - 三等奖
+      - 第一名
+      - 先进集体
+      - 先进个人
+      - 青年文明号
+      - 五一劳动奖
+      - 示范点
+      - 五星级
+      - 示范所
+      - 表彰大会
+    normal:
+      - 荣誉
+      - 奖项
+      - 榜单
+      - 排名
+      - 颁奖
+      - 证书
+      - 领奖
+    negative:
+      - 招聘
+      - 招募
+
+  - id: leader_visit
+    name: 领导调研与来访
+    type: event
+    priority: 95
+    veto_on_negative: true
+    strong:
+      - 莅临
+      - 调研
+      - 视察
+      - 检查指导
+      - 指导工作
+      - 来访
+      - 到访
+      - 参观交流
+      - 座谈交流
+    normal:
+      - 主管部门
+      - 上级单位
+      - 行业协会
+      - 监管部门
+      - 统战部门
+      - 人大
+      - 政协
+      - 合作单位
+      - 兄弟单位
+      - 领导
+    negative:
+      - 招聘
+      - 招募
+
+  - id: case_achievement
+    name: 重大成果与业绩
+    type: event
+    priority: 90
+    # 标题含「实务研讨/邀请函」的多半是活动通知或专业文章，不是业绩播报
+    veto_on_negative: true
+    strong:
+      - 成功交付
+      - 验收通过
+      - 提前交付
+      - 复评通过
+      - 整改通过
+      - 超额完成
+      - 首创
+      - 全国首创
+      - 重大影响
+      - 标杆项目
+      - 重大突破
+      - 亿元
+      - 中标
+      - 写入上级单位工作报告
+      - 上级单位工作报告
+      - 上级单位验收
+      - 最终认定
+      - 省级主管部门
+    normal:
+      - 项目
+      - 承接
+      - 交付
+      - 验收
+      - 评审
+      - 专项服务
+      - 顾问服务
+      - 业绩
+      - 上级单位
+      - 入选
+    negative:
+      - 案例分享
+      - 案例解析
+      - 评审规则
+      - 实务研讨
+      - 浅析
+      - 探讨
+      - 邀请函
+      - 预告
+      - 对话
+
+  - id: personnel
+    name: 人事任免
+    type: event
+    priority: 85
+    veto_on_negative: false
+    strong:
+      - 任命
+      - 聘任
+      - 晋升
+      - 当选
+      - 换届
+      - 出任
+      - 加盟
+      - 加入本单位
+      - 新晋骨干
+      - 班子会议
+      - 任免
+    normal:
+      - 骨干
+      - 团队
+      - 执业
+      - 转正
+      - 新进人员
+    negative:
+      - 招聘
+      - 招募
+
+  - id: party_building
+    name: 党建
+    type: event
+    priority: 80
+    veto_on_negative: false
+    strong:
+      - 党支部
+      - 党委
+      - 党总支
+      - 主题党日
+      - 党课
+      - 党建
+      - 入党
+      - 组织生活会
+      - 党史学习
+      - 支部大会
+      - 双报到
+    normal:
+      - 党员
+      - 支部书记
+      - 红色
+      - 初心
+      - 使命
+    negative: []
+
+  - id: public_welfare
+    name: 公益与社会责任
+    type: event
+    priority: 75
+    veto_on_negative: false
+    strong:
+      - 公益
+      - 公益服务
+      - 宣讲
+      - 志愿服务
+      - 捐赠
+      - 帮扶
+      - 助学
+      - 免费咨询
+      - 社会责任
+      - 乡村振兴
+      - 慰问
+      - 送服务
+      - 公益讲座
+      - 公开课
+      - 公益课堂
+      - 警示教育
+    normal:
+      - 爱心
+      - 捐款
+      - 志愿
+      - 社区
+      - 学校
+      - 群众
+    negative: []
+
+  - id: branch_coop
+    name: 分支机构与重要合作
+    type: event
+    priority: 70
+    veto_on_negative: false
+    strong:
+      - 分支机构
+      - 揭牌
+      - 签约
+      - 战略合作
+      - 共建
+      - 设立
+      - 开业
+      - 入驻
+      - 框架协议
+      - 授牌
+    normal:
+      - 合作
+      - 协议
+      - 挂牌
+      - 基地
+      - 学院
+      - 高校
+      - 签约仪式
+    negative: []
+
+  - id: conference
+    name: 会议论坛与行业交流
+    type: event
+    priority: 60
+    veto_on_negative: false
+    strong:
+      - 论坛
+      - 研讨会
+      - 峰会
+      - 沙龙
+      - 年会
+      - 圆桌
+      - 发布会
+      - 交流活动
+      - 学术研讨
+      - 主办
+      - 承办
+      - 协办
+      # 本单位主办/承办的会议，标题常写成「…研讨会在我单位成功举办」
+      - 成功举办
+      - 在我单位举办
+      - 在我单位成功举办
+      - 专题研讨
+      - 实务研讨
+    normal:
+      - 研讨
+      - 交流
+      - 会议
+      - 参会
+      - 分享
+      - 主题演讲
+      - 大会
+      - 讲座
+      - 培训班
+    negative: []
+
+  - id: anniversary_culture
+    name: 周年庆与文化建设
+    type: event
+    priority: 55
+    veto_on_negative: false
+    strong:
+      - 周年
+      - 庆典
+      - 所庆
+      - 文化建设
+      - 运动会
+      - 读书会
+      - 团建
+      - 征文
+      - 诗会
+      - 联欢
+      - 颁奖典礼
+      - 年会暨
+      - 联谊赛
+      - 球赛
+      - 乒乓球
+      - 篮球
+      - 手工
+      - 季军
+      - 亚军
+      - 冠军
+      - 夺冠
+      - 圆满落幕
+    normal:
+      - 纪念
+      - 文化
+      - 风采
+      - 活动
+      - 圆满举行
+      - 圆满举办
+      - 圆满结束
+    negative: []
+
+  - id: media_report
+    name: 媒体报道
+    type: event
+    priority: 50
+    veto_on_negative: false
+    strong:
+      - 媒体报道
+      - 专访
+      - 采访
+      - 央视
+      - 人民日报
+      - 行业报刊
+      - 专业媒体
+      - 省级日报
+      - 市级日报
+      - 新华网
+      - 学习强国
+      - 风云榜
+      - 对话
+    normal:
+      - 报道
+      - 转载
+      - 刊发
+      - 记者
+      - 专栏
+    negative: []
+
+  - id: exclude_pro
+    name: 专业文章
+    type: exclude
+    priority: 0
+    scope: title_only
+    strong:
+      - 实务
+      - 解读
+      - 浅析
+      - 探析
+      - 刍议
+      - 评析
+      - 裁判要旨
+      - 评审规则
+      - 案例解析
+      - 案例分享
+      - 法律适用
+      - 新规速递
+      - 实务问答
+      - 案例讲解
+      - 要点梳理
+      - 实务指南
+      - 实务研究
+      - 专家解读
+      - 风险提示
+      - 合规要点
+      - 疑难问题
+    normal:
+      - 行业规范
+      - 政策文件
+      - 国家标准
+      - 制度文件
+      - 管理办法
+      - 行业标准
+      - 知识产权
+      - 合规
+      - 观点
+      - 思考
+    # 出现任一即不按专业文章处理：这些是所级活动的信号，
+    # 标题里带「实务」二字的研讨会 / 分享会 / 讲座不能当专业文章剔掉
+    must_not_have:
+      - 举办
+      - 主办
+      - 承办
+      - 协办
+      - 莅临
+      - 揭牌
+      - 签约
+      - 研讨会在
+      - 分享会在
+      - 论坛
+      - 庆典
+      - 圆满
+      - 预告
+      - 邀请函
+    negative: []
+
+  - id: exclude_routine
+    name: 常规对外讲座/培训
+    type: exclude
+    priority: 0
+    logic: all_of_groups
+    scope: title_only
+    # 员工应邀去外部单位讲课是常规业务拓展，不算单位大事。
+    # 三个条件同时成立才排除，且标题里出现「本单位/举办/主办」等一律不排除。
+    groups:
+      form:
+        - 讲座
+        - 培训
+        - 授课
+        - 宣讲
+        - 分享
+        - 专题交流
+        - 经验分享会
+        - 分享会
+        - 交流会议
+        - 开讲
+        - 课堂
+      routine:
+        - 应邀
+        - 受邀
+        - 开展
+        - 作
+        - 走进
+    must_not_have:
+      - 本单位
+      - 我单位
+      - 举办
+      - 主办
+      - 承办
+      - 协办
+      - 论坛
+      - 峰会
+      - 研讨会
+      - 沙龙
+      - 签约
+      - 揭牌
+      - 荣获
+      - 获评
+      - 表彰
+      # 公益宣讲不是业务拓展：同样是「走进某地讲课」，但性质不同，要留在公益类
+      - 公益
+      - 宣讲
+      - 志愿
+      - 反霸凌
+      - 青少
+      - 家长
+      - 监护
+
+  - id: exclude_personal_welfare
+    name: 个人公益（单人宣讲）
+    type: exclude
+    priority: 0
+    logic: all_of_groups
+    scope: title_only
+    # 口径：单个员工走进学校/社区讲一堂课，属于个人公益行为，
+    # 不是单位级大事。所以「某人 + 走进某地」同时出现即排除。
+    # 例外：明确是「本单位志愿团队」组织的活动，属单位级公益，保留。
+    groups:
+      who:
+        - 员工
+      where:
+        - 走进
+        - 步入
+        - 来到
+        - 深入
+    must_not_have:
+      - 志愿团队
+      - 志愿队
+      - 本单位
+      - 我单位
+      - 举办
+      - 主办
+      - 联合
+      - 携手
+      - 十周年
+
+  - id: exclude_duty
+    name: 个人履职（人大/政协）
+    type: exclude
+    priority: 0
+    scope: title_only
+    # 个人担任人大代表、政协委员的履职报道，属个人社会职务，
+    # 按口径不进所级大事记。所里组织、或选举当选本身仍按荣誉处理。
+    strong:
+      - 委员履职
+      - 履职
+      - 政协专栏
+      - 人大代表
+      - 政协委员
+    normal:
+      - 政协
+      - 人大
+    must_not_have:
+      - 本单位
+      - 我单位
+      - 当选
+      - 受聘
+      - 聘任
+
+  - id: exclude_festival
+    name: 节日祝福
+    type: exclude
+    priority: 0
+    logic: all_of_groups
+    scope: title_only
+    groups:
+      festival:
+        - 春节
+        - 新春
+        - 新年
+        - 元旦
+        - 除夕
+        - 元宵
+        - 端午
+        - 中秋
+        - 国庆
+        - 重阳
+        - 腊八
+        - 清明
+        - 劳动节
+        - 妇女节
+        - 教师节
+        - 儿童节
+        - 父亲节
+        - 母亲节
+        - 七夕
+        - 感恩节
+        - 圣诞
+        - 佳节
+        - 祖国
+        - 华诞
+        - 盛世
+      greeting:
+        - 快乐
+        - 安康
+        - 吉祥
+        - 祝福
+        - 祝愿
+        - 恭祝
+        - 祝您
+        - 祝大家
+        - 繁荣昌盛
+        - 国泰民安
+        - 山河
+        - 贺词
+        - 问候
+        - 团圆
+        - 阖家
+        - 岁岁
+        - 如意
+        - 时节
+    # 出现任一即不排除，留给事件类别判断
+    must_not_have:
+      - 举办
+      - 开展
+      - 慰问
+      - 走访
+      - 联欢
+      - 诗会
+      - 座谈
+      - 表彰
+      - 签约
+      - 揭牌
+      - 论坛
+      - 培训
+      - 宣讲
+      - 公益
+      - 大事
+      - 回顾
+      - 盘点
+      - 总结
+      - 成绩
+      - 亮点
+      - 巡礼
+      - 答卷
+
+  - id: exclude_annual_case
+    name: 年度案例发布
+    type: exclude
+    priority: 0
+    scope: title_only
+    # 十期连载的案例评选，本身不是单个事件，但是大事记最好的业绩校验源，
+    # 单独成一类并在台账里置顶，方便写的时候反查「今年有哪些案子」
+    strong:
+      - 十佳案例
+      - 优秀案例
+      - 年度案例
+      - 优秀案例
+      - 评选结果公示
+
+  - id: exclude_recruit
+    name: 招聘
+    type: exclude
+    priority: 0
+    scope: title_only
+    strong:
+      - 招聘
+      - 招募
+      - 诚聘
+      - 校园招聘
+      - 求贤
+      - 招贤
+
+  - id: exclude_notice
+    name: 预告通知
+    type: exclude
+    priority: 0
+    scope: title_only
+    strong:
+      - 讲座预告
+      - 活动预告
+      - 邀请函
+      - 报名开启
+      - 即将开讲
+      - 敬请期待
+
+  - id: exclude_promo
+    name: 业务宣传
+    type: exclude
+    priority: 0
+    scope: title_only
+    # 纯宣传物料：业务介绍、电子书、白皮书，没有事件属性
+    strong:
+      - 业务介绍
+      - 服务介绍
+      - 电子书
+      - 白皮书
+      - 宣传册
+      - 产品手册
+      - 法律服务产品
+
+  - id: exclude_internal
+    name: 内部工作会
+    type: exclude
+    priority: 0
+    scope: title_only
+    # 所内工作部署、推进会属于日常管理，不进大事记；
+    # 注意不要写「班子会议」，年度班子会议是节点性事件，要留在事件类里
+    strong:
+      - 工作部署会
+      - 部署会
+      - 推进会
+      - 动员会
+      - 季度工作会议
+      - 月例会
+      - 周例会

@@ -1,0 +1,43 @@
+# ===========================================
+# 千万不要提交的东西
+# ===========================================
+
+# 登录态 / 会话凭证（泄露等于把公众号后台交出去）
+data/
+auth*.json
+*_auth.json
+browser_profile/
+
+# 抓到的数据与导出结果（含真实文章标题、正文、原文链接）
+*.db
+*.sqlite
+*.sqlite3
+out/
+*.xlsx
+*.xls
+*.md.bak
+
+# 本地真实配置（含公众号名称、fakeid 等个人信息）
+config.yaml
+rules.yaml
+overrides.yaml
+
+# ===========================================
+# 常规忽略
+# ===========================================
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+*.log
+*.tmp
+.workbuddy/

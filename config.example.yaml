@@ -1,0 +1,54 @@
+# 抓取配置模板。
+# 用法：复制成 config.yaml 再改，config.yaml 已被 .gitignore 忽略，不会上传。
+#   第一次运行时如果缺少 config.yaml，程序会自动从本文件复制一份。
+
+account:
+  # 公众号昵称。仅用于日志显示和自动搜索 fakeid，填错也能跑。
+  nickname: "你的公众号名称"
+  # 导出文件与台账标题里用的名称。想进一步模糊化就填一个中性词，如"本单位"
+  brand: "示例单位"
+  # 抓自己的号不要传 fakeid，传了接口会直接 200013 频控；改 true 才传
+  use_fakeid: false
+  # 留空则自动搜索；若自动搜索失败，从后台图文编辑页 URL 里抄 __biz 与 fakeid
+  fakeid: ""
+  biz: ""
+
+window:
+  # 抓取起始日期，本期只做这一年
+  since: "2026-01-01"
+  until: null
+
+paths:
+  db: "data/wechat.db"
+  auth: "data/auth.json"
+  profile: "data/browser_profile"
+  out: "out"
+
+fetch:
+  # 每页条数，实测 20 有效（早期误以为上限是 5）
+  page_size: 20
+  # 列表页间隔秒数（随机区间），调小会显著提高 200013 概率
+  page_interval: [8, 15]
+  long_rest_every: 5
+  long_rest_seconds: [60, 120]
+  # 撞到 200013 时先长休再试同一页，还不行才中止（断点已存）
+  freq_backoff_seconds: [120, 200]
+  # 单次运行最多翻多少页，30 页 ≈ 600 篇
+  max_pages_per_run: 30
+
+  # 正文页间隔与分批休息
+  body_interval: [6, 12]
+  body_batch: 60
+  body_batch_rest: [600, 900]
+  max_body_per_run: 300
+  max_body_per_day: 600
+
+  timeout: 25
+  retries: 2
+  # 连续多少页零新增即判定"已追上最新"
+  new_stop_pages: 2
+
+classify:
+  rules: "rules.yaml"
+  # 正文只扫前 N 字，重大事件通常在开头交代
+  body_scan_chars: 1200
